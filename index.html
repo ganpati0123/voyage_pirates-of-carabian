@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>Voyage MMXXVI - Pirate Adventure</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body,html{width:100%;height:100%;background:#0a0604;overflow:hidden;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
+#canvas{width:100vw;height:100vh;display:block}
+
+/* GLB POSITION INDICATOR */
+#glbPositionIndicator{
+  position:fixed;
+  top:120px;
+  right:20px;
+  background:rgba(0,0,0,0.95);
+  border:3px solid #4ecdc4;
+  border-radius:10px;
+  padding:20px;
+  color:#4ecdc4;
+  font-size:14px;
+  font-family:monospace;
+  font-weight:bold;
+  min-width:280px;
+  box-shadow:0 8px 30px rgba(78,205,196,0.5);
+  z-index:1001;
+}
+#glbPositionIndicator .title{
+  font-size:16px;
+  color:#ff6b6b;
+  margin-bottom:15px;
+  text-align:center;
+  text-transform:uppercase;
+  letter-spacing:2px;
+}
+#glbPositionIndicator .coord{
+  margin:8px 0;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+#glbPositionIndicator .coord .label{
+  color:#d4af37;
+  font-size:18px;
+  margin-right:10px;
+}
+#glbPositionIndicator .coord .value{
+  color:#4ecdc4;
+  font-size:20px;
+  letter-spacing:1px;
+  background:rgba(78,205,196,0.1);
+  padding:5px 10px;
+  border-radius:5px;
+}
+#glbPositionIndicator .controls{
+  margin-top:15px;
+  padding-top:15px;
+  border-top:2px solid rgba(78,205,196,0.3);
+  font-size:12px;
+  color:#e8d4a0;
+  line-height:1.6;
+}
+#glbPositionIndicator .controls div{
+  margin:5px 0;
+}
+#glbPositionIndicator .key{
+  display:inline-block;
+  background:rgba(212,175,55,0.3);
+  color:#d4af37;
+  padding:2px 8px;
+  border-radius:4px;
+  margin:0 3px;
+  font-weight:bold;
+}
+
+/* CONTENT BOXES - RIGHT SIDE */
+.content-box{
+  position:fixed;
+  right:20px;
+  top:50%;
+  transform:translateY(-50%) translateX(100px);
+  width:420px;
+  max-width:calc(100vw - 40px);
+  background:rgba(10,6,4,0.95);
+  border:2px solid #d4af37;
+  border-radius:12px;
+  padding:25px;
+  opacity:0;
+  transition:opacity 0.6s,transform 0.6s;
+  box-shadow:0 10px 50px rgba(212,175,55,0.4);
+  z-index:999;
+  max-height:85vh;
+  overflow-y:auto;
+  pointer-events:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.content-box.visible{
+  opacity:1;
+  transform:translateY(-50%) translateX(0);
+  animation:float 3s ease-in-out infinite;
+}
+@keyframes float{
+  0%,100%{transform:translateY(-50%) translateX(0) translateY(0)}
+  50%{transform:translateY(-50%) translateX(0) translateY(-5px)}
+}
+.content-box .typing{
+  display:inline-block;
+  opacity:0;
+}
+.content-box .typing.show{
+  opacity:1;
+  animation:fadeIn 0.1s;
+}
+@keyframes fadeIn{
+  from{opacity:0}
+  to{opacity:1}
+}
+
+.content-box h2{
+  color:#d4af37;
+  font-size:24px;
+  margin-bottom:15px;
+  font-weight:bold;
+  text-shadow:0 0 10px rgba(212,175,55,0.3);
+}
+.content-box h3{
+  color:#c9a959;
+  font-size:18px;
+  margin:15px 0 8px;
+  font-weight:600;
+}
+.content-box p{
+  color:#e8d4a0;
+  font-size:15px;
+  line-height:1.7;
+  margin-bottom:12px;
+}
+.content-box ul{
+  color:#e8d4a0;
+  font-size:14px;
+  line-height:1.8;
+  list-style:none;
+  padding-left:0;
+}
+.content-box ul li{
+  margin-bottom:8px;
+  padding-left:20px;
+  position:relative;
+}
+.content-box ul li:before{
+  content:'•';
+  color:#d4af37;
+  font-weight:bold;
+  position:absolute;
+  left:0;
+}
+.content-box .highlight{
+  color:#d4af37;
+  font-weight:bold;
+}
+.content-box .label{
+  display:inline-block;
+  background:#d4af37;
+  color:#0a0604;
+  padding:6px 12px;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:bold;
+  margin:5px 5px 5px 0;
+}
+.content-box::-webkit-scrollbar{width:6px}
+.content-box::-webkit-scrollbar-track{background:rgba(0,0,0,0.3)}
+.content-box::-webkit-scrollbar-thumb{background:#d4af37;border-radius:3px}
+
+/* MOBILE RESPONSIVE */
+@media(max-width:768px){
+  .content-box{
+    width:calc(100vw - 30px);
+    right:15px;
+    left:15px;
+    padding:20px;
+    font-size:14px;
+    max-height:70vh;
+    top:50%;
+    transform:translateY(-50%) translateX(100%);
+  }
+  .content-box.visible{
+    transform:translateY(-50%) translateX(0);
+  }
+  .content-box h2{font-size:20px;margin-bottom:12px}
+  .content-box h3{font-size:16px;margin:12px 0 6px}
+  .content-box p{font-size:14px;margin-bottom:10px;line-height:1.6}
+  .content-box .label{font-size:11px;padding:5px 10px;margin:4px 4px 4px 0}
+  .content-box ul li{font-size:13px;margin-bottom:6px}
+}
+
+@media(max-width:480px){
+  .content-box{
+    width:calc(100vw - 20px);
+    right:10px;
+    left:10px;
+    padding:15px;
+    font-size:13px;
+    max-height:60vh;
+    top:50%;
+    transform:translateY(-50%) translateX(100%);
+  }
+  .content-box.visible{
+    transform:translateY(-50%) translateX(0);
+  }
+  .content-box h2{font-size:18px;margin-bottom:10px}
+  .content-box h3{font-size:15px;margin:10px 0 5px}
+  .content-box p{font-size:13px;margin-bottom:8px;line-height:1.5}
+  .content-box .label{font-size:10px;padding:4px 8px;margin:3px 3px 3px 0}
+  .content-box ul li{font-size:12px;margin-bottom:5px;padding-left:15px}
+  .content-box::-webkit-scrollbar{width:4px}
+}
+
+@media(orientation:landscape) and (max-height:500px){
+  .content-box{
+    max-height:75vh;
+    font-size:12px;
+    top:50%;
+  }
+  .content-box h2{font-size:16px}
+  .content-box p{font-size:12px}
+}
+
+/* SCROLL INDICATOR - PIRATE THEME */
+#scrollIndicator{
+  position:fixed;
+  bottom:30px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:1001;
+  text-align:center;
+  pointer-events:none;
+}
+#scrollIndicator .compass{
+  font-size:60px;
+  animation:rotate 4s linear infinite, pulse 2s ease-in-out infinite;
+  filter:drop-shadow(0 0 20px rgba(212,175,55,0.8));
+}
+#scrollIndicator .text{
+  color:#d4af37;
+  font-size:16px;
+  font-weight:bold;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  margin-top:10px;
+  text-shadow:0 0 10px rgba(212,175,55,0.8),0 0 20px rgba(212,175,55,0.5);
+  animation:glow 2s ease-in-out infinite;
+}
+@keyframes rotate{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+@keyframes pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.1)}
+}
+@keyframes glow{
+  0%,100%{opacity:0.8}
+  50%{opacity:1}
+}
+@media(max-width:480px){
+  #scrollIndicator{bottom:20px}
+  #scrollIndicator .compass{font-size:50px}
+  #scrollIndicator .text{font-size:14px;letter-spacing:1px}
+}
+
+/* 2D/3D TOGGLE BUTTON - PIRATES OF CARIBBEAN MAX LEVEL VIBE */
+#toggleButton{
+  position:fixed;
+  top:20px; /* Top position (was 100px) */
+  right:20px;
+  z-index:1002; /* Higher than content box */
+  background:linear-gradient(135deg,#0f0a06,#2d1810,#1a0e08);
+  border:3px solid #d4af37;
+  border-radius:20px;
+  padding:8px 12px; /* Half size (was 15px 25px) */
+  cursor:pointer;
+  box-shadow:0 10px 40px rgba(0,0,0,0.9),0 0 40px rgba(212,175,55,0.6),inset 0 2px 10px rgba(212,175,55,0.2);
+  transition:all 0.4s ease;
+  pointer-events:auto;
+  backdrop-filter:blur(10px);
+  overflow:hidden;
+  display:block; /* Ensure visibility */
+}
+#toggleButton::before{
+  content:'';
+  position:absolute;
+  top:-50%;
+  left:-50%;
+  width:200%;
+  height:200%;
+  background:radial-gradient(circle,rgba(212,175,55,0.1) 0%,transparent 70%);
+  animation:shine 3s infinite;
+}
+@keyframes shine{
+  0%,100%{transform:translate(-50%,-50%) rotate(0deg)}
+  50%{transform:translate(-30%,-30%) rotate(180deg)}
+}
+#toggleButton:hover{
+  transform:scale(1.08) translateY(-2px);
+  box-shadow:0 15px 50px rgba(0,0,0,1),0 0 60px rgba(212,175,55,0.8),inset 0 2px 15px rgba(212,175,55,0.4);
+  border-color:#f4d03f;
+  background:linear-gradient(135deg,#1a0e08,#3d2314,#2d1810);
+}
+#toggleButton .icon{
+  font-size:14px; /* Half size (was 28px) */
+  margin-right:5px; /* Half spacing (was 10px) */
+  display:inline-block;
+  animation:compass-spin 4s ease-in-out infinite;
+  filter:drop-shadow(0 0 8px rgba(212,175,55,0.6));
+}
+@keyframes compass-spin{
+  0%,100%{transform:rotate(0deg) scale(1)}
+  25%{transform:rotate(-15deg) scale(1.1)}
+  50%{transform:rotate(0deg) scale(1)}
+  75%{transform:rotate(15deg) scale(1.1)}
+}
+#toggleButton .text{
+  color:#d4af37;
+  font-size:9px; /* Half size (was 18px) */
+  font-weight:bold;
+  font-family:'Brush Script MT','Lucida Handwriting','Segoe Script',cursive;
+  font-style:italic;
+  letter-spacing:1px; /* Half spacing (was 2px) */
+  text-shadow:0 0 15px rgba(212,175,55,0.8),0 2px 5px rgba(0,0,0,0.8),0 0 25px rgba(212,175,55,0.4);
+  display:inline-block;
+  animation:text-glow 2s ease-in-out infinite;
+  position:relative;
+  z-index:1;
+}
+@keyframes text-glow{
+  0%,100%{text-shadow:0 0 15px rgba(212,175,55,0.8),0 2px 5px rgba(0,0,0,0.8),0 0 25px rgba(212,175,55,0.4)}
+  50%{text-shadow:0 0 25px rgba(212,175,55,1),0 2px 5px rgba(0,0,0,0.8),0 0 40px rgba(212,175,55,0.6)}
+}
+@media(max-width:768px){
+  #toggleButton{
+    padding:6px 10px; /* Half size */
+    top:15px;
+    right:15px;
+  }
+  #toggleButton .icon{font-size:12px;margin-right:4px}
+  #toggleButton .text{font-size:8px;letter-spacing:0.75px}
+}
+@media(max-width:480px){
+  #toggleButton{
+    padding:5px 8px; /* Half size */
+    top:10px;
+    right:10px;
+  }
+  #toggleButton .icon{font-size:10px;margin-right:3px}
+  #toggleButton .text{font-size:7px;letter-spacing:0.5px}
+}
+</style>
+</head>
+<body>
+
+<!-- PIRATE BACKGROUND MUSIC - LOOPS CONTINUOUSLY -->
+<audio id="pirateMusic" loop>
+  <source src="pirate.mp3" type="audio/mpeg">
+</audio>
+
+<canvas id="canvas"></canvas>
+
+<!-- SCROLL INDICATOR - PIRATE COMPASS -->
+<div id="scrollIndicator">
+  <div class="compass">🧭</div>
+  <div class="text">⚓ Scroll to Navigate ⚓</div>
+</div>
+
+<!-- GLB POSITION INDICATOR - HIDDEN -->
+<!--
+<div id="glbPositionIndicator" style="display:none;">
+  <div class="title">🎯 GLB LIVE POSITION</div>
+  <div class="coord">
+    <span class="label">X:</span>
+    <span class="value" id="glbPosX">0.00</span>
+  </div>
+  <div class="coord">
+    <span class="label">Y:</span>
+    <span class="value" id="glbPosY">0.00</span>
+  </div>
+  <div class="coord">
+    <span class="label">Z:</span>
+    <span class="value" id="glbPosZ">0.00</span>
+  </div>
+  <div class="coord">
+    <span class="label">Scale:</span>
+    <span class="value" id="glbScale">1.00</span>
+  </div>
+  <div class="coord">
+    <span class="label">RotY:</span>
+    <span class="value" id="glbRotY">0.00</span>
+  </div>
+  <div class="controls">
+    <div>🖱️ <strong>MOUSE DRAG:</strong></div>
+    <div><span class="key">Drag</span> Move X & Y</div>
+    <div><span class="key">Ctrl+Drag</span> Move Z (depth)</div>
+    <div><span class="key">Shift+Drag</span> Rotate Y</div>
+    <div><span class="key">Alt+Drag</span> Scale</div>
+    <div style="margin-top:10px;">⌨️ <strong>KEYBOARD:</strong></div>
+    <div><span class="key">↑↓←→</span> Move</div>
+    <div><span class="key">W/S</span> Forward/Back</div>
+    <div><span class="key">+/-</span> Scale</div>
+  </div>
+</div>
+-->
+
+<!-- 2D/3D TOGGLE BUTTON - ABOVE CONTENT BOXES -->
+<a href="index-2d.html" id="toggleButton" style="display:block !important; visibility:visible !important; text-decoration:none;">
+  <span class="icon">🗺️</span>
+  <span class="text">Switch to 2D</span>
+</a>
+
+<!-- Content Box 0% - VOYAGE INTRO -->
+<div class="content-box" id="box0">
+  <h2>⚓ VOYAGE HACKATHON</h2>
+  <p class="highlight">A 36-Hour Plunder of Innovation</p>
+  <p>SAIL BEYOND THE KNOWN WORLD</p>
+  <p><strong>26 | 27 SEPTEMBER 2026</strong></p>
+  <p>Hoist the sails and chart a course through uncharted waters. Voyage beckons the boldest crews to forge legends across a relentless 36-hour tide — where ideas become treasure and innovators become captains of tomorrow.</p>
+  <p><strong>THE TIDE:</strong></p>
+  <span class="label">36 HOURS</span>
+  <span class="label">3-4 CREW SIZE</span>
+  <span class="label">₹25,000 TREASURE</span>
+</div>
+
+<!-- Content Box 2% - DOMAINS 1 -->
+<div class="content-box" id="box2">
+  <h2>🗺️ THE WATERS</h2>
+  <p class="highlight">Choose Thy Domain</p>
+  <h3>I. AI / Machine Learning</h3>
+  <p><strong>Devil's Triangle</strong> - Harness the dark arts of AI and Machine Learning to conquer the unknown.</p>
+  <span class="label">LLMs</span>
+  <span class="label">RAG</span>
+  <span class="label">Agents</span>
+  <span class="label">Neural Nets</span>
+  
+  <h3>II. Blockchain / Web3</h3>
+  <p><strong>Tortuga Market</strong> - Navigate the future through Blockchain and decentralized waters.</p>
+  <span class="label">Smart Contracts</span>
+  <span class="label">DeFi</span>
+  <span class="label">dApps</span>
+  
+  <h3>III. FinTech</h3>
+  <p><strong>Dead Men's Ledger</strong> - Redefine the world of gold and ledgers through secure, scalable financial instruments.</p>
+  <span class="label">Payments</span>
+  <span class="label">Banking</span>
+  <span class="label">Fraud</span>
+</div>
+
+<!-- Content Box 3% - DOMAINS 2 -->
+<div class="content-box" id="box3">
+  <h2>🏥 MORE DOMAINS</h2>
+  <h3>IV. Healthcare</h3>
+  <p><strong>Fountain of Youth</strong> - Leverage the healing arts to build smarter, more accessible Healthcare.</p>
+  <span class="label">MedTech</span>
+  <span class="label">Diagnostics</span>
+  <span class="label">Telehealth</span>
+  
+  <h3>V. Cybersecurity</h3>
+  <p><strong>Davy Jones' Vault</strong> - Fortify the digital realm against the ever-shifting tides of cyber threat.</p>
+  <span class="label">AppSec</span>
+  <span class="label">Crypto</span>
+  <span class="label">Network</span>
+  
+  <h3>VI. Open Innovation</h3>
+  <p><strong>Shipwreck Cove</strong> - Explore limitless waters and bring bold ideas to life across any domain.</p>
+  <span class="label">Any Domain</span>
+  <span class="label">Creative</span>
+  <span class="label">Bold Ideas</span>
+</div>
+
+<!-- Content Box 7% - TREASURE -->
+<div class="content-box" id="box7">
+  <h2>💰 TREASURE COVE</h2>
+  <p class="highlight">Bounties & Booty</p>
+  <p>A treasure hoard of ₹25,000 awaits the finest crews, plus exclusive bounty for every soul who dares set sail.</p>
+  
+  <h3>🥇 FIRST BOUNTY - ₹10,000</h3>
+  <p>GOLD HOARD</p>
+  
+  <h3>🥈 SECOND BOUNTY - ₹7,000</h3>
+  <p>SILVER CACHE</p>
+  
+  <h3>🥉 THIRD BOUNTY - ₹5,000</h3>
+  <p>BRONZE COFFER</p>
+  
+  <p><strong>EVERY SOUL CLAIMS A SHARE:</strong></p>
+  <ul>
+    <li>Crew Garb & T-Shirts</li>
+    <li>Voyager Certificates</li>
+    <li>Captain's Bounty</li>
+    <li>Crew Insignia Stickers</li>
+    <li>Counsel of Mentors</li>
+  </ul>
+</div>
+
+<!-- Content Box 9% - RULES -->
+<div class="content-box" id="box9">
+  <h2>⚔️ CAPTAIN'S CODE</h2>
+  <p class="highlight">Rules of the Voyage</p>
+  <ul>
+    <li>Each voyager must bring their own laptop, charger, and power backup for the journey ahead.</li>
+    <li>None shall depart the arena after registration until the voyage concludes and the tides recede.</li>
+    <li>Wear yer participant insignia at all times within the hackathon arena — it is yer mark of passage.</li>
+    <li>Wield only permitted resources and APIs in accordance with the captain's code of conduct.</li>
+  </ul>
+</div>
+
+<!-- Content Box 13% - TIMELINE -->
+<div class="content-box" id="box13">
+  <h2>📅 CAPTAIN'S LOG</h2>
+  <p class="highlight">The 36-Hour Odyssey</p>
+  <p>From the orientation of the fleet to the closing ceremony — here unfolds the chronicle of yer relentless 36-hour tide.</p>
+  
+  <h3>📆 Key Dates</h3>
+  <p><strong>The Voyage Sets Sail:</strong> 26 September 2026</p>
+  <p><strong>The Voyage Concludes:</strong> 27 September 2026</p>
+  
+  <h3>⏰ Day the First</h3>
+  <ul>
+    <li>Orientation of the Fleet</li>
+    <li>The Voyage Begins</li>
+    <li>Morning Watch — Session I</li>
+    <li>The Midday Feast</li>
+    <li>Deck Games — Round I</li>
+    <li>Counsel of Captains — Session II</li>
+  </ul>
+  
+  <h3>⏰ Day the Second</h3>
+  <ul>
+    <li>Counsel of Captains — Session III</li>
+    <li>The Judgement & Submission Window</li>
+    <li>Closing Ceremony</li>
+    <li>The Voyage Concludes</li>
+  </ul>
+</div>
+
+<!-- Content Box 17% - SPONSORS -->
+<div class="content-box" id="box17">
+  <h2>🤝 THE BROTHERHOOD</h2>
+  <p class="highlight">Backed by the Finest</p>
+  <p>Industry titans powering Voyage with technology, counsel, and the resources to conquer the deep.</p>
+  
+  <h3>⛓️ Algorand - BLOCKCHAIN ALLY</h3>
+  <p>The leading Layer-1 blockchain for the future of the decentralized seas. High-performance blockchain forged for speed, security, and scalability with near-instant finality.</p>
+  
+  <h3>🌐 OSEN - COMMUNITY ALLY</h3>
+  <p>Empowering hackathons & builder fleets across the realm. Technology-driven fellowship that champions hackathons, workshops, and developer crews.</p>
+  
+  <h3>🤖 Mewayz Global - AI & TECH ALLY</h3>
+  <p>AI-powered business operating platform for the next wave of ventures. Part of Orcrys Technologies, helping ventures scale through intelligent automation.</p>
+  
+  <h3>⚡ GRID Community - The GRID Fleet</h3>
+  <p><strong>2,000+ Souls | 800+ Voyagers | Pan-India Reach</strong></p>
+  <p>Student-led fellowship dedicated to empowering students through collaboration, hands-on learning, and real-world opportunities.</p>
+  
+  <p style="margin-top:20px;color:#d4af37;font-weight:bold;">📧 gridcommunity@example.com</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<script>
+console.log('🎬 Starting Voyage MMXXVI...');
+
+var canvas=document.getElementById('canvas');
+var renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+console.log('✅ Renderer created');
+
+var scene=new THREE.Scene();
+console.log('✅ Scene created');
+
+var camera=new THREE.PerspectiveCamera(55,window.innerWidth/window.innerHeight,0.1,1000);
+camera.position.set(0.34,10.00,9.99); // Y increased to 10.00 (even higher camera)
+camera.lookAt(0.34,10.00,0); // Look straight ahead at SAME Y level (perfectly horizontal)
+console.log('✅ Camera at:',camera.position);
+
+var zoomLevel=9.99;
+var startZ=9.99;
+var minZ=-100; // Increased zoom depth limit (was -20)
+var startX=0.34;
+var startY=10.00; // Camera Y position (higher view)
+
+function updateDepthIndicator(){
+  var depth=((startZ-zoomLevel)/(startZ-minZ))*30;
+  depth=Math.max(0,Math.min(30,depth));
+  
+  // Show/hide content boxes based on depth
+  var boxes=[
+    {id:'box0',trigger:0,range:2},
+    {id:'box2',trigger:2,range:2},
+    {id:'box3',trigger:3,range:4},
+    {id:'box7',trigger:7,range:2},
+    {id:'box9',trigger:9,range:4},
+    {id:'box13',trigger:13,range:4},
+    {id:'box17',trigger:17,range:100}
+  ];
+  
+  boxes.forEach(function(box){
+    var el=document.getElementById(box.id);
+    if(el){
+      if(depth>=box.trigger && depth<box.trigger+box.range){
+        if(!el.classList.contains('visible')){
+          el.classList.add('visible');
+          // Start typing animation when box becomes visible
+          typeBoxContent(el);
+        }
+      }else{
+        el.classList.remove('visible');
+        // Reset typing when box hides
+        resetBoxContent(el);
+      }
+    }
+  });
+}
+
+var typingIntervals={};
+
+function typeBoxContent(box){
+  // Clear any existing typing
+  if(typingIntervals[box.id]){
+    clearInterval(typingIntervals[box.id]);
+  }
+  
+  // Get all child elements (h2, h3, p, span, etc)
+  var children=Array.from(box.children);
+  var elementIndex=0;
+  
+  // Hide all content initially
+  children.forEach(function(child){
+    child.style.opacity='0';
+  });
+  
+  // Type each element one by one
+  typingIntervals[box.id]=setInterval(function(){
+    if(elementIndex<children.length){
+      var currentElement=children[elementIndex];
+      
+      // Show element with typing effect
+      currentElement.style.opacity='1';
+      
+      // Type the text content word by word
+      var originalText=currentElement.textContent;
+      var words=originalText.split(' ');
+      var wordIndex=0;
+      currentElement.textContent='';
+      
+      var wordInterval=setInterval(function(){
+        if(wordIndex<words.length){
+          currentElement.textContent+=(wordIndex>0?' ':'')+words[wordIndex];
+          wordIndex++;
+        }else{
+          clearInterval(wordInterval);
+        }
+      },40); // 40ms per word
+      
+      elementIndex++;
+    }else{
+      clearInterval(typingIntervals[box.id]);
+    }
+  },200); // 200ms delay between elements
+}
+
+function resetBoxContent(box){
+  if(typingIntervals[box.id]){
+    clearInterval(typingIntervals[box.id]);
+  }
+  // Reset all children opacity
+  var children=Array.from(box.children);
+  children.forEach(function(child){
+    child.style.opacity='0';
+  });
+}
+
+function updateCameraPosition(){
+  var depth=((startZ-zoomLevel)/(startZ-minZ))*30;
+  
+  // Check if depth is greater than 18% (Z < -55)
+  if(zoomLevel < -55){
+    // After 18% depth: Subtle camera UP and RIGHT shift
+    var extraDepth = Math.abs(zoomLevel + 55); // How much past -55
+    var liftAmount = extraDepth * 0.08; // Subtle UP shift (reduced from 0.15)
+    var rightShift = extraDepth * 0.12; // Subtle RIGHT shift (reduced from 0.25)
+    
+    camera.position.x = startX + rightShift; // Move RIGHT (positive X)
+    camera.position.y = startY + liftAmount; // Move UP (positive Y)
+    camera.position.z = zoomLevel;
+    
+    // Debug log
+    console.log('Subtle Shift! X:'+camera.position.x.toFixed(2)+' Y:'+camera.position.y.toFixed(2)+' Right:'+rightShift.toFixed(2)+' Up:'+liftAmount.toFixed(2));
+  }else{
+    // Before 18%: Normal straight movement
+    camera.position.x = startX;
+    camera.position.y = startY;
+    camera.position.z = zoomLevel;
+  }
+  
+  // Camera looks straight ahead horizontally at same Y level
+  camera.lookAt(camera.position.x, camera.position.y, camera.position.z-10);
+}
+
+canvas.addEventListener('wheel',function(e){
+  e.preventDefault();
+  zoomLevel+=e.deltaY*0.01;
+  zoomLevel=Math.max(minZ,Math.min(10,zoomLevel));
+  
+  updateCameraPosition();
+  updateDepthIndicator();
+  
+  // Hide scroll indicator after first scroll
+  var indicator=document.getElementById('scrollIndicator');
+  if(indicator && zoomLevel<9.8){
+    indicator.style.opacity='0';
+    setTimeout(function(){indicator.style.display='none'},500);
+  }
+  
+  var depth=((startZ-zoomLevel)/(startZ-minZ))*30;
+  console.log('Depth:',depth.toFixed(0)+'%','X:',camera.position.x.toFixed(2),'Z:',zoomLevel.toFixed(2));
+},{passive:false});
+
+// TOUCH CONTROLS FOR MOBILE
+var touchStartY=0;
+var touchStartZoom=zoomLevel;
+
+canvas.addEventListener('touchstart',function(e){
+  if(e.touches.length===1){
+    touchStartY=e.touches[0].clientY;
+    touchStartZoom=zoomLevel;
+  }
+},{passive:true});
+
+canvas.addEventListener('touchmove',function(e){
+  if(e.touches.length===1){
+    e.preventDefault();
+    var touchDelta=touchStartY-e.touches[0].clientY;
+    zoomLevel=touchStartZoom-(touchDelta*0.02);
+    zoomLevel=Math.max(minZ,Math.min(10,zoomLevel));
+    
+    updateCameraPosition();
+    updateDepthIndicator();
+    
+    // Hide scroll indicator after first touch
+    var indicator=document.getElementById('scrollIndicator');
+    if(indicator && zoomLevel<9.8){
+      indicator.style.opacity='0';
+      setTimeout(function(){indicator.style.display='none'},500);
+    }
+  }
+},{passive:false});
+
+canvas.addEventListener('touchend',function(e){
+  touchStartY=0;
+},{passive:true});
+
+updateDepthIndicator();
+console.log('✅ Straight zoom enabled - 30% max depth');
+
+scene.add(new THREE.AmbientLight(0xffffff,1.0));
+var light=new THREE.DirectionalLight(0xffffff,1.2);
+light.position.set(5,10,7);
+scene.add(light);
+console.log('✅ Lights added');
+
+function animate(){
+  requestAnimationFrame(animate);
+  
+  // 🌟 FIXED GLB POSITION - NO MOVEMENT, ONLY BREATHING SCALE
+  if(glbModel){
+    var time=Date.now()*0.001;
+    
+    // FIXED POSITION - No movement at all
+    glbModel.position.x = -1.36; // Fixed X
+    glbModel.position.y = -13.78; // Fixed Y
+    glbModel.position.z = -65.00; // Fixed Z
+    
+    // FIXED ROTATION - No rotation
+    glbModel.rotation.y = 0; // Fixed rotation
+    glbModel.rotation.x = 0; // Fixed rotation
+    glbModel.rotation.z = 0; // Fixed rotation
+    
+    // PREMIUM BREATHING SCALE - Like a living world (only scale animation)
+    var breathe = 2.0 + Math.sin(time*0.2) * 0.08 + Math.cos(time*0.15) * 0.04;
+    glbModel.scale.set(breathe, breathe, breathe);
+  }
+  
+  // 🌟 FIXED MAIN GLB OBJECTS - NO MOVEMENT, ONLY SCALE BREATHING
+  if(animatableObjects && animatableObjects.length>0){
+    var time=Date.now()*0.001;
+    
+    animatableObjects.forEach(function(obj){
+      if(obj.userData.originalPosition){
+        // FIXED POSITIONS - No movement
+        obj.position.x=obj.userData.originalPosition.x;
+        obj.position.y=obj.userData.originalPosition.y;
+        obj.position.z=obj.userData.originalPosition.z;
+        
+        // FIXED ROTATIONS - No rotation
+        obj.rotation.x=obj.userData.originalRotation.x;
+        obj.rotation.y=obj.userData.originalRotation.y;
+        obj.rotation.z=obj.userData.originalRotation.z;
+        
+        // ONLY SCALE BREATHING (like living world)
+        var breathe=1.0+Math.sin(time*0.5)*0.005;
+        obj.scale.set(
+          obj.userData.originalScale.x*breathe,
+          obj.userData.originalScale.y*breathe,
+          obj.userData.originalScale.z*breathe
+        );
+      }
+    });
+  }
+  
+  // PREMIUM OCTOPUS ANIMATION - LEFT SIDE (ALWAYS ANIMATED) - FIXED POSITION
+  if(octopusModel){
+    var time=Date.now()*0.001;
+    // FIXED POSITION
+    octopusModel.position.x=-15; // Fixed X
+    octopusModel.position.y=5; // Fixed Y
+    octopusModel.position.z=-30; // Fixed Z
+    // FIXED ROTATION
+    octopusModel.rotation.y=Math.PI/2; // Fixed rotation (face right)
+    octopusModel.rotation.z=0; // Fixed rotation
+    // ONLY SCALE BREATHING
+    var pulse=1.0+Math.sin(time*1.2)*0.05;
+    octopusModel.scale.set(pulse, pulse, pulse);
+  }
+  
+  // PREMIUM OWL FLYING - STRAIGHT SLOW MOTION (2X SIZE, HIGH)
+  if(owlModel){
+    owlProgress+=flyingSpeed;
+    if(owlProgress>1) owlProgress=0; // Loop back to start
+    
+    var time=Date.now()*0.001;
+    var currentZ=20+owlProgress*(-130); // Z: 20 to -110
+    
+    // Apply same camera shift logic to bird position
+    var baseX=-5;
+    var baseY=8;
+    if(currentZ < -55){
+      var extraDepth = Math.abs(currentZ + 55);
+      baseY += extraDepth * 0.08; // UP shift like camera (reduced from 0.15)
+      baseX += extraDepth * 0.12; // RIGHT shift like camera (reduced from 0.25)
+    }
+    
+    owlModel.position.z=currentZ;
+    owlModel.position.x=baseX; // Adjusted X
+    owlModel.position.y=baseY+Math.sin(time*3)*0.4; // Adjusted Y with flapping
+    
+    owlModel.rotation.x=Math.sin(time*6)*0.1;
+    owlModel.rotation.z=0;
+    owlModel.scale.set(2.0+Math.sin(time*6)*0.08, 2.0+Math.sin(time*6)*0.08, 2.0);
+  }
+  
+  // PREMIUM MACAW FLYING - STRAIGHT SLOW MOTION (2X SIZE, HIGH)
+  if(macawModel){
+    macawProgress+=flyingSpeed*1.2;
+    if(macawProgress>1) macawProgress=0;
+    
+    var time=Date.now()*0.001;
+    var currentZ=20+macawProgress*(-130); // Z: 20 to -110
+    
+    // Apply same camera shift logic to bird position
+    var baseX=5;
+    var baseY=9;
+    if(currentZ < -55){
+      var extraDepth = Math.abs(currentZ + 55);
+      baseY += extraDepth * 0.08; // UP shift like camera (reduced from 0.15)
+      baseX += extraDepth * 0.12; // RIGHT shift like camera (reduced from 0.25)
+    }
+    
+    macawModel.position.z=currentZ;
+    macawModel.position.x=baseX; // Adjusted X
+    macawModel.position.y=baseY+Math.sin(time*4)*0.5; // Adjusted Y with flapping
+    
+    macawModel.rotation.x=Math.sin(time*8)*0.12;
+    macawModel.rotation.z=0;
+    macawModel.rotation.y=Math.PI;
+    macawModel.scale.set(2.0+Math.sin(time*8)*0.1, 2.0+Math.sin(time*8)*0.1, 2.0);
+  }
+  
+  // PREMIUM PIRATE COIN - LEFT SIDE (after octopus, Z:-55) - FIXED POSITION
+  if(coinModel){
+    var time=Date.now()*0.001;
+    // FIXED POSITION
+    coinModel.position.x=-12; // Fixed X
+    coinModel.position.y=3; // Fixed Y
+    coinModel.position.z=-55; // Fixed Z
+    // FIXED ROTATION
+    coinModel.rotation.y=0; // Fixed rotation
+    coinModel.rotation.z=0; // Fixed rotation
+    // ONLY SCALE BREATHING
+    var pulse=1.0+Math.sin(time*2)*0.04;
+    coinModel.scale.set(0.5*pulse, 0.5*pulse, 0.5*pulse); // 0.5x base
+  }
+  
+  // PREMIUM HECTOR BARBOSSA - RIGHT SIDE (Z:-70) - FIXED POSITION
+  if(barbossaModel){
+    var time=Date.now()*0.001;
+    // FIXED POSITION
+    barbossaModel.position.x=12; // Fixed X
+    barbossaModel.position.y=4; // Fixed Y
+    barbossaModel.position.z=-70; // Fixed Z
+    // FIXED ROTATION
+    barbossaModel.rotation.y=0; // Fixed rotation
+    barbossaModel.rotation.x=0; // Fixed rotation
+    // ONLY SCALE BREATHING
+    var pulse=1.0+Math.sin(time*1.1)*0.03;
+    barbossaModel.scale.set(0.5*pulse, 0.5*pulse, 0.5*pulse); // 0.5x base
+  }
+  
+  // SECOND OWL - STARTS AT 50% (duplicate, offset timing)
+  if(owl2Model){
+    owl2Progress+=flyingSpeed;
+    if(owl2Progress>1) owl2Progress=0;
+    
+    var time=Date.now()*0.001;
+    var currentZ=20+owl2Progress*(-130);
+    
+    // Apply same camera shift logic
+    var baseX=-5;
+    var baseY=8;
+    if(currentZ < -55){
+      var extraDepth = Math.abs(currentZ + 55);
+      baseY += extraDepth * 0.08; // UP shift like camera (reduced from 0.15)
+      baseX += extraDepth * 0.12; // RIGHT shift like camera (reduced from 0.25)
+    }
+    
+    owl2Model.position.z=currentZ;
+    owl2Model.position.x=baseX;
+    owl2Model.position.y=baseY+Math.sin(time*3)*0.4;
+    owl2Model.rotation.x=Math.sin(time*6)*0.1;
+    owl2Model.rotation.z=0;
+    owl2Model.scale.set(2.0+Math.sin(time*6)*0.08, 2.0+Math.sin(time*6)*0.08, 2.0);
+  }
+  
+  // SECOND MACAW - STARTS AT 50% (duplicate, offset timing)
+  if(macaw2Model){
+    macaw2Progress+=flyingSpeed*1.2;
+    if(macaw2Progress>1) macaw2Progress=0;
+    
+    var time=Date.now()*0.001;
+    var currentZ=20+macaw2Progress*(-130);
+    
+    // Apply same camera shift logic
+    var baseX=5;
+    var baseY=9;
+    if(currentZ < -55){
+      var extraDepth = Math.abs(currentZ + 55);
+      baseY += extraDepth * 0.08; // UP shift like camera (reduced from 0.15)
+      baseX += extraDepth * 0.12; // RIGHT shift like camera (reduced from 0.25)
+    }
+    
+    macaw2Model.position.z=currentZ;
+    macaw2Model.position.x=baseX;
+    macaw2Model.position.y=baseY+Math.sin(time*4)*0.5;
+    macaw2Model.rotation.x=Math.sin(time*8)*0.12;
+    macaw2Model.rotation.z=0;
+    macaw2Model.rotation.y=Math.PI;
+    macaw2Model.scale.set(2.0+Math.sin(time*8)*0.1, 2.0+Math.sin(time*8)*0.1, 2.0);
+  }
+  
+  // 🏴‍☠️ CAPTAIN JACK SPARROW - PROPER ANIMATION AROUND FIXED POSITION
+  if(captainJackModel){
+    var time=Date.now()*0.001;
+    
+    // ANIMATED POSITION - Moves around fixed center point
+    captainJackModel.position.x=0+Math.sin(time*0.6)*1.5; // Left-Right sway around center
+    captainJackModel.position.y=5+Math.sin(time*0.8)*0.8; // Up-Down bounce around fixed Y
+    captainJackModel.position.z=2+Math.sin(time*0.3)*1.0; // Slight forward-back around fixed Z
+    
+    // PROPER ROTATION - Body sway and head tilt
+    captainJackModel.rotation.z=Math.sin(time*0.7)*0.15; // Body lean left-right
+    captainJackModel.rotation.y=Math.sin(time*0.5)*0.2; // Body turn slightly
+    captainJackModel.rotation.x=Math.sin(time*0.9)*0.08; // Forward-back tilt
+    
+    // SCALE BREATHING EFFECT (0.5X BASE SIZE)
+    var breathe=0.5+Math.sin(time*0.4)*0.02; // Base scale 0.5 (half of 1.0)
+    captainJackModel.scale.set(breathe, breathe, breathe);
+  }
+  
+  renderer.render(scene,camera);
+}
+animate();
+console.log('✅ Animation loop started');
+
+var loader=new THREE.GLTFLoader();
+var animatableObjects=[];
+var animateGLBElements=null;
+var glbModel=null; // Store GLB model reference
+
+// ADDITIONAL ANIMATED MODELS
+var octopusModel=null;
+var owlModel=null;
+var macawModel=null;
+var owl2Model=null; // Second owl (duplicate)
+var macaw2Model=null; // Second macaw (duplicate)
+var captainJackModel=null; // Captain Jack Sparrow
+
+// 4 NEW PIRATE MODELS - ALTERNATING LEFT-RIGHT (ONLY 2 NOW)
+var coinModel=null;
+var barbossaModel=null;
+
+var owlProgress=0;
+var macawProgress=0;
+var owl2Progress=0.5; // Start at 50% (middle of path)
+var macaw2Progress=0.5; // Start at 50% (middle of path)
+var flyingSpeed=0.006; // Perfect speed - natural bird flying
+
+console.log('🔄 Loading GLB...');
+loader.load('sands_location.glb',function(gltf){
+  console.log('✅ GLB LOADED!',gltf);
+  var model=gltf.scene;
+  glbModel=model; // Store reference
+  
+  // SET GLB AT BASE POSITION - FIXED POSITION
+  model.position.set(-1.36, -13.78, -65.00); // BASE POSITION - FIXED
+  model.rotation.y=0.00;
+  model.scale.set(2.00, 2.00, 2.00); // Double size
+  
+  scene.add(model);
+  
+  // Update position indicator
+  updateGLBPositionDisplay();
+  
+  console.log('✅ Model loaded at X:-1.36, Y:-13.78, Z:-65.00, Scale:2.00');
+  
+  // 🌟 ULTRA PREMIUM PRO ADVANCED MAX LEVEL LEGENDARY ANIMATIONS FOR MAIN GLB
+  // Store all mesh children for individual subtle animations
+  model.traverse(function(child){
+    if(child.isMesh){
+      // Store original properties
+      child.userData.originalPosition=child.position.clone();
+      child.userData.originalRotation=child.rotation.clone();
+      child.userData.originalScale=child.scale.clone();
+      // Random offset for natural variation
+      child.userData.randomOffset=Math.random()*Math.PI*2;
+      child.userData.randomOffset2=Math.random()*Math.PI*2;
+      child.userData.randomOffset3=Math.random()*Math.PI*2;
+      child.userData.speed=0.2+Math.random()*0.3; // Very slow, subtle
+      child.userData.swayAmount=0.02+Math.random()*0.03; // Minimal sway
+      child.userData.animationType=Math.floor(Math.random()*3); // 0,1,2 for variation
+      animatableObjects.push(child);
+    }
+  });
+  
+  console.log('✅ GLB has',animatableObjects.length,'objects ready for ULTRA PREMIUM ENHANCED animations');
+  
+  // Find all animatable objects
+  model.traverse(function(child){
+    if(child.isMesh){
+      child.userData.originalPosition=child.position.clone();
+      child.userData.originalRotation=child.rotation.clone();
+      child.userData.randomOffset=Math.random()*Math.PI*2;
+      child.userData.speed=0.3+Math.random()*0.7; // 0.3 to 1.0
+      animatableObjects.push(child);
+    }
+  });
+  
+  console.log('✅ Animating',animatableObjects.length,'objects in GLB');
+  
+  // Animation function - DISABLED FOR FREE MOVEMENT
+  animateGLBElements=function(){
+    // Animation disabled to allow free GLB positioning
+    // Uncomment below to re-enable animation
+    /*
+    var time=Date.now()*0.001;
+    animatableObjects.forEach(function(obj,index){
+      if(obj.userData.originalPosition){
+        var offset=obj.userData.randomOffset;
+        var speed=obj.userData.speed;
+        
+        // More visible movement (±0.5 units)
+        obj.position.x=obj.userData.originalPosition.x+Math.sin(time*speed+offset)*0.5;
+        obj.position.y=obj.userData.originalPosition.y+Math.cos(time*speed*0.5+offset)*0.3;
+        obj.position.z=obj.userData.originalPosition.z+Math.sin(time*speed*0.7+offset)*0.4;
+        
+        // Slight rotation for more life
+        obj.rotation.y=obj.userData.originalRotation.y+Math.sin(time*speed+offset)*0.05;
+      }
+    });
+    */
+  };
+  
+  console.log('✅ GLB elements animation active');
+  
+},function(progress){
+  if(progress.total>0){
+    var percent=Math.round(progress.loaded/progress.total*100);
+    console.log('⏳ Loading:',percent+'%');
+  }
+},function(error){
+  console.error('❌ GLB ERROR:',error);
+});
+
+// LOAD OCTOPUS - LEFT SIDE ANIMATED
+console.log('🐙 Loading Octopus...');
+loader.load('wop_-_octopus_pirate_king_high_poly.glb',function(gltf){
+  console.log('✅ Octopus loaded!');
+  octopusModel=gltf.scene;
+  
+  // Position at FRONT - More towards camera, LEFT side - FIXED POSITION
+  octopusModel.position.set(-15, 5, -30); // More AAGE (less negative Z, was -45) - FIXED
+  octopusModel.scale.set(1.0, 1.0, 1.0); // 1x size (was 1.5)
+  octopusModel.rotation.y=Math.PI/2; // Face right
+  
+  scene.add(octopusModel);
+  console.log('🐙 Octopus at FRONT (closer to camera) - WILL ANIMATE');
+},function(progress){
+  if(progress.total>0) console.log('🐙 Loading octopus:',Math.round(progress.loaded/progress.total*100)+'%');
+},function(error){
+  console.error('❌ Octopus ERROR:',error);
+});
+
+// LOAD OWL - FLYING START TO END
+console.log('🦉 Loading Owl...');
+loader.load('owl.glb',function(gltf){
+  console.log('✅ Owl loaded!');
+  owlModel=gltf.scene;
+  
+  // Start position - HIGHER, 2X SIZE - FIXED POSITIONS
+  owlModel.position.set(-5, 8, 20); // Higher Y (was 3) - FIXED
+  owlModel.scale.set(2.0, 2.0, 2.0); // 2x size (was 1.5)
+  owlModel.rotation.y=Math.PI; // Face forward
+  
+  scene.add(owlModel);
+  console.log('🦉 Owl ready - 2X SIZE, HIGH position');
+},function(progress){
+  if(progress.total>0) console.log('🦉 Loading owl:',Math.round(progress.loaded/progress.total*100)+'%');
+},function(error){
+  console.error('❌ Owl ERROR:',error);
+});
+
+// LOAD MACAW - FLYING START TO END
+console.log('🦜 Loading Macaw...');
+loader.load('low_poly_macaw_3d_model_free.glb',function(gltf){
+  console.log('✅ Macaw loaded!');
+  macawModel=gltf.scene;
+  
+  // Start position - HIGHER, 2X SIZE - FIXED POSITIONS
+  macawModel.position.set(5, 9, 20); // Higher Y (was 4) - FIXED
+  macawModel.scale.set(2.0, 2.0, 2.0); // 2x size (was 1.5)
+  macawModel.rotation.y=Math.PI; // Face forward
+  
+  scene.add(macawModel);
+  console.log('🦜 Macaw ready - 2X SIZE, HIGH position');
+},function(progress){
+  if(progress.total>0) console.log('🦜 Loading macaw:',Math.round(progress.loaded/progress.total*100)+'%');
+},function(error){
+  console.error('❌ Macaw ERROR:',error);
+});
+
+// LOAD SECOND OWL - DUPLICATE (starts at 50% progress)
+console.log('🦉 Loading Second Owl...');
+loader.load('owl.glb',function(gltf){
+  console.log('✅ Second Owl loaded!');
+  owl2Model=gltf.scene;
+  
+  // Start at middle of path (50% progress) - FIXED POSITIONS
+  owl2Model.position.set(-5, 8, 20-50); // Start at midpoint - FIXED
+  owl2Model.scale.set(2.0, 2.0, 2.0);
+  owl2Model.rotation.y=Math.PI;
+  
+  scene.add(owl2Model);
+  console.log('🦉 Second Owl ready - starts at 50%');
+},function(progress){
+  if(progress.total>0) console.log('🦉 Loading second owl:',Math.round(progress.loaded/progress.total*100)+'%');
+},function(error){
+  console.error('❌ Second Owl ERROR:',error);
+});
+
+// LOAD SECOND MACAW - DUPLICATE (starts at 50% progress)
+console.log('🦜 Loading Second Macaw...');
+loader.load('low_poly_macaw_3d_model_free.glb',function(gltf){
+  console.log('✅ Second Macaw loaded!');
+  macaw2Model=gltf.scene;
+  
+  // Start at middle of path (50% progress) - FIXED POSITIONS
+  macaw2Model.position.set(5, 9, 20-50); // Start at midpoint - FIXED
+  macaw2Model.scale.set(2.0, 2.0, 2.0);
+  macaw2Model.rotation.y=Math.PI;
+  
+  scene.add(macaw2Model);
+  console.log('🦜 Second Macaw ready - starts at 50%');
+},function(progress){
+  if(progress.total>0) console.log('🦜 Loading second macaw:',Math.round(progress.loaded/progress.total*100)+'%');
+},function(error){
+  console.error('❌ Second Macaw ERROR:',error);
+});
+
+// LOAD CAPTAIN JACK SPARROW - ULTRA PREMIUM PRO ADVANCED MAX LEVEL
+console.log('🏴‍☠️ Loading CAPTAIN JACK SPARROW...');
+loader.load('captain_jack_sparrow.glb',function(gltf){
+  console.log('✅ CAPTAIN JACK SPARROW loaded!');
+  captainJackModel=gltf.scene;
+  
+  // Position at CENTER, CLOSE to camera, 0.5X SIZE, LOWER - FIXED POSITION
+  captainJackModel.position.set(0, 5, 2); // CENTER, Y=5 (lower), Z=2 (2 units closer to camera) - FIXED
+  captainJackModel.scale.set(0.5, 0.5, 0.5); // 0.5x size (half of 1x)
+  captainJackModel.rotation.y=0; // Face FRONT (towards camera)
+  
+  scene.add(captainJackModel);
+  console.log('🏴‍☠️ CAPTAIN JACK 0.5X SIZE - LOWER POSITION!');
+},function(progress){
+  if(progress.total>0) console.log('🏴‍☠️ Loading Captain Jack:',Math.round(progress.loaded/progress.total*100)+'%');
+},function(error){
+  console.error('❌ Captain Jack ERROR:',error);
+});
+
+// 🪙 LOAD PIRATE COIN - LEFT SIDE (Z:-55, MORE BACK)
+console.log('🪙 Loading Pirate Coin...');
+loader.load('stylized_pirate_coin.glb',function(gltf){
+  console.log('✅ Pirate Coin loaded!');
+  coinModel=gltf.scene;
+  
+  // Position: LEFT side, after octopus, MORE BACK, FACE FRONT - FIXED POSITION
+  coinModel.position.set(-12, 3, -55); // LEFT (X:-12), Z:-55 (more back) - FIXED
+  coinModel.scale.set(0.5, 0.5, 0.5); // 0.5x size (1/3rd of 1.5)
+  coinModel.rotation.y=0; // FACE FRONT
+  
+  scene.add(coinModel);
+  console.log('🪙 Coin at LEFT Z:-55, 0.5x size, FACE FRONT');
+},function(progress){
+  if(progress.total>0) console.log('🪙 Loading coin:',Math.round(progress.loaded/progress.total*100)+'%');
+},function(error){
+  console.error('❌ Coin ERROR:',error);
+});
+
+// 🏴‍☠️ LOAD HECTOR BARBOSSA - RIGHT SIDE (Z:-70)
+console.log('🏴‍☠️ Loading Hector Barbossa...');
+loader.load('hector_barbossa_lego.glb',function(gltf){
+  console.log('✅ Hector Barbossa loaded!');
+  barbossaModel=gltf.scene;
+  
+  // Position: RIGHT side, FACE FRONT - FIXED POSITION
+  barbossaModel.position.set(12, 4, -70); // RIGHT (X:12), Z:-70 - FIXED
+  barbossaModel.scale.set(0.5, 0.5, 0.5); // 0.5x size (1/3rd of 1.5)
+  barbossaModel.rotation.y=0; // FACE FRONT (was Math.PI/2)
+  
+  scene.add(barbossaModel);
+  console.log('🏴‍☠️ Barbossa at RIGHT Z:-70, 0.5x size, FACE FRONT');
+},function(progress){
+  if(progress.total>0) console.log('🏴‍☠️ Loading Barbossa:',Math.round(progress.loaded/progress.total*100)+'%');
+},function(error){
+  console.error('❌ Barbossa ERROR:',error);
+});
+
+window.addEventListener('resize',function(){
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+});
+
+// GLB POSITION CONTROL FUNCTIONS
+function updateGLBPositionDisplay(){
+  if(!glbModel) return;
+  
+  var posX=document.getElementById('glbPosX');
+  var posY=document.getElementById('glbPosY');
+  var posZ=document.getElementById('glbPosZ');
+  
+  if(posX) posX.textContent=glbModel.position.x.toFixed(2);
+  if(posY) posY.textContent=glbModel.position.y.toFixed(2);
+  if(posZ) posZ.textContent=glbModel.position.z.toFixed(2);
+}
+
+// MOUSE DRAG CONTROLS FOR GLB POSITION
+var isDragging=false;
+var previousMousePosition={x:0,y:0};
+var dragMode='xy'; // 'xy' for X/Y, 'z' for Z with scroll
+
+canvas.addEventListener('mousedown',function(e){
+  if(e.button===0){ // Left click
+    isDragging=true;
+    previousMousePosition={x:e.clientX,y:e.clientY};
+    canvas.style.cursor='move';
+    e.preventDefault();
+  }
+});
+
+canvas.addEventListener('mousemove',function(e){
+  if(!isDragging || !glbModel) return;
+  
+  var deltaX=e.clientX-previousMousePosition.x;
+  var deltaY=e.clientY-previousMousePosition.y;
+  
+  // Sensitivity
+  var sensitivity=0.02;
+  
+  if(e.ctrlKey){
+    // Ctrl + Drag = Move Z axis
+    glbModel.position.z-=deltaY*sensitivity;
+  }else if(e.shiftKey){
+    // Shift + Drag = Rotate
+    glbModel.rotation.y+=deltaX*0.01;
+  }else{
+    // Normal Drag = Move X and Y
+    glbModel.position.x+=deltaX*sensitivity;
+    glbModel.position.y-=deltaY*sensitivity;
+  }
+  
+  previousMousePosition={x:e.clientX,y:e.clientY};
+  updateGLBPositionDisplay();
+  
+  // Log to console
+  console.log('GLB Position: X='+glbModel.position.x.toFixed(2)+
+              ', Y='+glbModel.position.y.toFixed(2)+
+              ', Z='+glbModel.position.z.toFixed(2)+
+              ', RotY='+glbModel.rotation.y.toFixed(2));
+});
+
+canvas.addEventListener('mouseup',function(e){
+  isDragging=false;
+  canvas.style.cursor='default';
+});
+
+canvas.addEventListener('mouseleave',function(e){
+  isDragging=false;
+  canvas.style.cursor='default';
+});
+
+// KEYBOARD CONTROLS FOR GLB POSITION (BACKUP)
+window.addEventListener('keydown',function(e){
+  if(!glbModel) return;
+  
+  var step=e.shiftKey ? 0.5 : 0.1; // Faster with Shift
+  
+  switch(e.key){
+    case 'ArrowUp':
+      e.preventDefault();
+      glbModel.position.y += step;
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      glbModel.position.y -= step;
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      glbModel.position.x -= step;
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      glbModel.position.x += step;
+      break;
+    case 'w':
+    case 'W':
+      glbModel.position.z -= step;
+      break;
+    case 's':
+    case 'S':
+      glbModel.position.z += step;
+      break;
+  }
+  
+  updateGLBPositionDisplay();
+  
+  // Log to console for easy copying
+  console.log('GLB Position: X=' + glbModel.position.x.toFixed(2) + 
+              ', Y=' + glbModel.position.y.toFixed(2) + 
+              ', Z=' + glbModel.position.z.toFixed(2));
+});
+
+// PIRATE MUSIC - CONTINUOUS LOOP
+var pirateMusic = document.getElementById('pirateMusic');
+pirateMusic.volume = 0.4; // Set volume to 40%
+
+// Try to play music (handle autoplay restrictions)
+function playPirateMusic() {
+  pirateMusic.play().catch(function(error) {
+    console.log('Music autoplay blocked, waiting for user interaction:', error);
+    // Add click listener to start music on first interaction
+    document.addEventListener('click', function() {
+      pirateMusic.play();
+    }, { once: true });
+  });
+}
+
+// Start music when page loads
+window.addEventListener('load', playPirateMusic);
+
+// Ensure music continues playing when switching between pages
+pirateMusic.addEventListener('ended', function() {
+  this.currentTime = 0;
+  this.play();
+});
+
+</script>
+
+</body>
+</html>
+
