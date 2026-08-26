@@ -1,25 +1,3 @@
 {
-  "version": 2,
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "headers": [
-    {
-      "source": "/(.*).glb",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "model/gltf-binary"
-        }
-      ]
-    },
-    {
-      "source": "/(.*).mp3",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "audio/mpeg"
-        }
-      ]
-    }
-  ]
+  "outputDirectory": "."
 }
