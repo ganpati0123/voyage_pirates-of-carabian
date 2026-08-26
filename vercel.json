@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1",
+      "headers": {
+        "Content-Type": "model/gltf-binary"
+      }
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
+}

@@ -1,0 +1,12 @@
+{
+  "name": "pirate-adventure",
+  "version": "1.0.0",
+  "description": "Pirate Adventure 3D Web Experience",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
